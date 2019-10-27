@@ -5,6 +5,7 @@ import algos.MillerRabinAlgorithm;
 import algos.PrimeGenerator;
 import algos.SieveAlgorithm;
 import algos.TrialDivision;
+import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import database.MongoConnection;
@@ -45,10 +46,6 @@ public class PrimeController {
         .check(requestBody -> requestBody.getStart() <= requestBody.getEnd(),
             "End has to be greater than or equal start range.").get();
 
-    // connect to db & collection
-    MongoDatabase database = MongoConnection.getInstance().getDatabase();
-    MongoCollection<Prime> collection = database.getCollection("primes", Prime.class);
-
     long timeBefore, timeAfter;
     int primesSize;
 
@@ -64,6 +61,9 @@ public class PrimeController {
     String cacheResponse;
     try (Jedis redisClient = RedisConnection.getInstance().getRedisPool().getResource()) {
       cacheResponse = redisClient.get(redisKey);
+    } catch (Exception e) {
+      // in case of redis error nullify the cache and calculate
+      cacheResponse = null;
     }
     timeAfter = System.currentTimeMillis();
 
@@ -79,6 +79,8 @@ public class PrimeController {
       // cache to redis
       try (Jedis redisClient = RedisConnection.getInstance().getRedisPool().getResource()) {
         redisClient.set(redisKey, String.valueOf(primes.size()));
+      } catch (Exception e) {
+        // don't halt if redis not working
       }
 
       primesSize = primes.size();
@@ -91,7 +93,15 @@ public class PrimeController {
     Prime prime = new Prime(String.valueOf(body.getAlgorithm()), body.getStart(), body.getEnd(),
         primesSize, timeAfter - timeBefore,
         java.time.LocalDateTime.now());
-    collection.insertOne(prime);
+
+    try {
+      // connect to db & collection & insert record
+      MongoDatabase database = MongoConnection.getInstance().getDatabase();
+      MongoCollection<Prime> collection = database.getCollection("primes", Prime.class);
+      collection.insertOne(prime);
+    } catch (MongoException e) {
+      // return response without saving to db
+    }
 
     // create response
     HashMap<String, Object> response = new HashMap<>();

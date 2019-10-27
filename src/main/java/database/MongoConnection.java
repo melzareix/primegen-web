@@ -8,9 +8,13 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings.Builder;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.SocketSettings;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
@@ -58,6 +62,8 @@ public class MongoConnection {
                 .maxSize(maxPoolSize);
           }
         })
+        .applyToClusterSettings(builder ->
+            builder.serverSelectionTimeout(1, TimeUnit.SECONDS))
         .build();
 
     // connect to mongo server & database
