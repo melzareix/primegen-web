@@ -12,4 +12,8 @@ Using the code from part 1 as the generation engine, write a server application 
 4. Run the generated jar `java -jar PATH_TO_JAR` to start the server.
 5. Modify the `.env` file to meet your environment and preferences.
 
+By Default The server will be running on http://localhost:7000
+
+API docs can be found at http://localhost:7000/docs.
+
 **Compiled fat jar is also available in the releases section**.
