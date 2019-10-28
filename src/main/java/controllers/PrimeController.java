@@ -11,6 +11,11 @@ import com.mongodb.client.MongoDatabase;
 import database.MongoConnection;
 import database.RedisConnection;
 import io.javalin.http.Handler;
+import io.javalin.plugin.openapi.annotations.OpenApi;
+import io.javalin.plugin.openapi.annotations.OpenApiContent;
+import io.javalin.plugin.openapi.annotations.OpenApiRequestBody;
+import io.javalin.plugin.openapi.annotations.OpenApiResponse;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import java.util.ArrayList;
 import java.util.HashMap;
 import models.Prime;
@@ -39,6 +44,15 @@ public class PrimeController {
     }
     return primeGenerator;
   }
+
+  @OpenApi(
+      description = "Return the number of primes in the closed range [l,r].",
+      summary = "Return the number of primes in the closed range [l,r].",
+      requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = RequestBody.class)),
+      responses = {
+          @OpenApiResponse(status = "200", content = @OpenApiContent(from = Prime.class))
+      }
+  )
 
   public static Handler generatePrimesInRange = ctx -> {
     // validate & parse body
